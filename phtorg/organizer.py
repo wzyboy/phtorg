@@ -8,9 +8,10 @@ import logging
 import dataclasses
 from pathlib import Path
 from datetime import datetime
+from datetime import UTC
+from zoneinfo import ZoneInfo
 from collections.abc import Iterable
 
-import pytz
 import click
 from tqdm import tqdm
 from PIL import Image
@@ -87,7 +88,7 @@ class PhotoOrganizer:
         self.dst_dir = dst_dir
         self.rename_tasks: list[RenameTask] = []
         self.skipped_items: list[PhotoInfo] = []
-        self.timezone = pytz.timezone(timezone_name)
+        self.timezone = ZoneInfo(timezone_name)
 
     def get_info(self, photo: Path) -> PhotoInfo:
         ext = photo.suffix.lower()
@@ -166,7 +167,7 @@ class PhotoOrganizer:
             dt_str += _exif_time_offset
             dt = isoparse(dt_str).astimezone(self.timezone)
         else:
-            dt = self.timezone.localize(isoparse(dt_str))
+            dt = isoparse(dt_str).replace(tzinfo=self.timezone)
         return PhotoInfo(photo, dt, 'EXIF')
 
     def get_info_from_mediainfo(self, photo: Path) -> PhotoInfo:
@@ -187,7 +188,7 @@ class PhotoOrganizer:
             local_dt = dt.astimezone(self.timezone)
         # If dt is naive, assume it's UTC
         else:
-            local_dt = pytz.utc.localize(dt).astimezone(self.timezone)
+            local_dt = dt.replace(tzinfo=UTC).astimezone(self.timezone)
         return PhotoInfo(photo, local_dt, 'MediaInfo')
 
     def start(self):
