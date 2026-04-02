@@ -77,7 +77,7 @@ class RenameTask:
 
 class PhotoOrganizer:
 
-    pillow_exts = {'.jpg', '.jpeg', '.heic'}
+    pillow_exts = {'.jpg', '.jpeg', '.heic', '.dng'}
     mediainfo_exts = {'.mov', '.mp4', '.m4v'}
     screenshot_exts = {'.png', '.gif', '.bmp', '.webp'}
     allowed_exts = pillow_exts | mediainfo_exts | screenshot_exts
@@ -131,9 +131,9 @@ class PhotoOrganizer:
         return PhotoInfo(photo, dt, 'mtime')
 
     def get_info_from_pillow(self, photo: Path) -> PhotoInfo:
-        image = Image.open(photo)
-        _exif1 = image.getexif()
-        _exif2 = _exif1.get_ifd(0x8769)
+        with Image.open(photo) as image:
+            _exif1 = image.getexif()
+            _exif2 = _exif1.get_ifd(0x8769)
         _exif = dict(_exif1) | _exif2
         exif = {
             ExifTags.TAGS[k]: v
